@@ -10,3 +10,8 @@
 
 - Feature Engineering based on available dataset.
 - Using Support Vector Classification for Titanic Survivor prediction problem.
+
+3) Electric Load Forecasting using Artificial Neural Network
+
+- Electric Load Consumption dataset from UCI Repository. Connect for more information on dataset.
+- Using Multi-Layer Perceptron Regressor from Scikit Learn for forecasting electric consumption.
