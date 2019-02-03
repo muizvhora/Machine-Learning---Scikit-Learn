@@ -1,0 +1,321 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+from sklearn import model_selection
+from sklearn import linear_model
+import sklearn as sk
+import sklearn.svm
+import sklearn.neural_network
+
+def load_data():
+    #PANDAS dataframe object
+    train_data = pd.read_csv('TITANIC_train.csv')
+    train_df = pd.DataFrame(train_data)
+    train_df.set_index('PassengerId', inplace = True)
+    return train_df
+load_data()
+
+def survival_age(dataframe):
+    ########## AGE & SURVIVAL CHANCES #################
+
+    #Adjusting bin values such that it has can reach maximum depth of distribution 
+    #but all extreme chances (0 or 100%) of survival are avoided.
+    
+    #### Feature Scaling ####
+    # SCIKIT-LEARN Preprocessing tools could not be used due to NaN values, and dropna() reduces too many samples
+    
+    df = dataframe.copy()
+    mean_age = df['Age'].mean() ##### MEAN of all age samples
+    std_age = df['Age'].std()   ##### Standard Deviation for all samples
+    
+    scaled_data = df['Age'].apply(lambda x: (x - mean_age)/(std_age))    #Feature normalization
+    df['Scaled_Age'] = scaled_data
+    
+#     #Grouping dataframe by 'Survived status' and 'Age' bins, with number of survivors/dead of people, for each bin size.
+#     groups = df.groupby(['Survived', pd.cut(df.Scaled_Age, 9)])
+#     surv_rate_age = groups.size().unstack()
+        
+#     #Plot bar chart indicating dead and survivors for each bin
+#     surv_rate_age.plot.bar()
+#     plt.show()
+    
+#     #Creating extra column 'Chances of Survival' for each bin for manual confirmation of trend
+#     surv_rate_age = surv_rate_age.T
+#     surv_rate_age['Chances of Survival'] = surv_rate_age.apply(lambda x: (float(x[1])/(x[1]+x[0]))*100, axis = 1)
+    
+    return df['Scaled_Age']
+survival_age(load_data())
+
+def survival_pclass(dataframe):
+
+    ######### PCLASS &  SURVIVAL CHANCES #############
+
+    df = dataframe.copy()
+    df['Modified Pclass'] = df['Pclass'].apply(lambda x: 1 if x==1 else 0)
+    
+    #Grouping dataframe by Pclass and Survived, for number of survivors/dead number of people, for each type of sample.
+    groups = df.groupby(['Survived', 'Modified Pclass'])
+    surv_rate_pclass = groups.size().unstack()
+
+    #Plot bar chart indicating dead and survivors for each type of Pclass
+    surv_rate_pclass.plot.bar()
+    plt.show()
+    
+#   Creating extra column 'Chances of Survival' for each bin for manual confirmation of trend
+    surv_rate_pclass = surv_rate_pclass.T
+    surv_rate_pclass['Chances of Survival'] = surv_rate_pclass.apply(lambda x: (float(x[1])/(x[1]+x[0]))*100, axis = 1)
+    
+    return surv_rate_pclass
+survival_pclass(load_data())
+
+def survival_gender(dataframe):
+
+    ######### GENDER & SURVIVAL CHANCES #############
+
+    df = dataframe.copy()
+    
+    df['Sex'].replace({"male" : 0, "female" : 1}, inplace = True)
+    
+    ##Grouping dataframe by Gender and Survived, for number of survivors/dead number of people, for each type of gender.
+#     groups = df.groupby(['Survived', 'Sex'])
+#     surv_rate_sex = groups.size().unstack()
+
+#     #Plot bar chart indicating dead and survivors for each type of gender
+#     surv_rate_sex.plot.bar()
+#     plt.show()
+    
+#     #Creating extra column 'Chances of Survival' for each bin for manual confirmation of trend
+#     surv_rate_sex = surv_rate_sex.T
+#     surv_rate_sex['Chances of Survival'] = surv_rate_sex.apply(lambda x: (float(x[1])/(x[1]+x[0]))*100, axis = 1)
+    return df.Sex.tolist()
+
+
+def survival_family(dataframe):    
+    
+    ########## FAMILY SIZE #################
+   
+    df = dataframe.copy()
+
+    #Creating new feature "FAMILY SIZE" =  Number of Siblings + Number of Parents on the Titanic
+    df['Family Size'] = (df['SibSp'] + df['Parch'])
+
+    #Preprocess Data in scale (0 to 1) for feature normalization
+    data = df['Family Size']
+    data = data.values.reshape(-1,1)
+    scale_family = sk.preprocessing.MinMaxScaler()
+    df['Family Size'] = scale_family.fit_transform(data.tolist()).tolist()
+        
+#     ##Grouping dataframe by Family Size and Survived, for number of survivors/dead number of people, for each class of family size.
+#     groups = df.groupby(['Survived', 'Family Size'])
+#     surv_rate_family = groups.size().unstack()
+
+#     #Plot bar chart indicating dead and survivors for each class of Family Size
+#     surv_rate_family.plot.bar()
+#     plt.show()
+#     surv_rate_family = surv_rate_family.T
+#     surv_rate_family['Chances of Survival'] = surv_rate_family.apply(lambda x: (float(x[1])/(x[1]+x[0]))*100, axis = 1)
+#     return surv_rate_family.fillna(0)
+    return scale_family.fit_transform(data.tolist())
+
+survival_family(load_data())
+
+def survival_fare(dataframe):
+
+    ########################## FARE ################################
+    #Bin size selected so as to obtain good sampling in first few bins with far off survival rates, because
+    #initial bins are the most populated ones and with larger bins, the survival rates are sampled over a large population
+    #making the analysis more obscure and meaningless.
+      
+    df = dataframe.copy()
+    
+    #Preprocess Data in scale (-1 to 1) for feature normalization
+    data = df['Fare'].fillna(0)
+    scaled_data = sk.preprocessing.scale(data.tolist())
+    df['Scaled_Fare']= scaled_data.tolist()
+#     df['Scaled_Fare'] = df['Scaled_Fare']
+    
+#     #Grouping dataframe by 'Survived' and 'Fare' bins, with number of survivors/dead of people, for each bin size.
+#     groups = df.groupby(['Survived', pd.cut(df.Scaled_Fare, 20)])
+#     surv_rate_fare = groups.size().unstack()
+
+#     #Plot bar chart indicating dead and survivors for each class of Fare amount
+#     surv_rate_fare.plot.bar()
+#     plt.show()
+#     surv_rate_fare = surv_rate_fare.fillna(0).T
+#     surv_rate_fare['Chances of Survival'] = surv_rate_fare.apply(lambda x: (float(x[1])/(x[1]+x[0]))*100, axis = 1)
+    return df['Scaled_Fare'].tolist()
+survival_fare(load_data())
+
+def survival_emb(dataframe):
+    ########## EMBARKMENT PORT ############
+    
+    df = dataframe.copy()
+    
+    #Grouping dataframe by Embarkment Port and Survived, for number of survivors/dead number of people, for each type of gender.
+    groups = df.groupby(['Survived', 'Embarked'])
+    surv_rate_emb = groups.size().unstack()
+
+    #Plot bar chart indicating dead and survivors for people from each port of embarkment
+    surv_rate_emb.plot.bar()
+    plt.show()
+    
+    surv_rate_emb = surv_rate_emb.T
+    surv_rate_emb['Chances of Survival'] = surv_rate_emb.apply(lambda x: (float(x[1])/(x[1]+x[0]))*100, axis = 1)  
+    
+    #Change index values from C, Q, S to digits 0, 1, 2
+    surv_rate_emb.reset_index(inplace = True)
+    
+    #surv_rate_emb.set_index([index_list, 'Survived'], inplace = True)
+    surv_rate_emb.drop(['Embarked'], axis = 1, inplace = True)
+    
+    return surv_rate_emb
+survival_emb(load_data())
+
+def survival_name(dataframe):
+    
+    #Passengers Name can be reason for their seat allotment on the ship, and this might be effective for placement near the exit
+    #and hence the survival rates of these passengers 
+    #Effectively first letters of the alphabet seem to have higher chances of survival compared to the later ones.
+    
+    #Work on copy of the file
+    df = dataframe.copy()
+    
+    #Create new column with ASCII value for First Letter of the name.
+    df['First_Letter'] = df.apply(lambda x : ord(x['Name'][0].upper()), axis = 1)
+      
+    #Feature Scaling
+    df['First_Letter'] = df['First_Letter'] - 65
+    data = df['First_Letter']
+    scaled_data = sk.preprocessing.scale(data.tolist())
+    df['First_Letter']= scaled_data.tolist()
+    
+    ##### SURVIVAL CHANCES WITH NAME ######
+#     #Group by Survived and First letter columns
+#     groups = df.groupby(['Survived', 'First_Letter'])
+#     surv_rate_name = groups.size().unstack()
+
+#     #Evaluate chances of survival
+#     surv_rate_name = surv_rate_name.T
+#     surv_rate_name['Chances of Survival'] = surv_rate_name.apply(lambda x: (float(x[1])/(x[1]+x[0]))*100, axis = 1)
+#     surv_rate_name.sort_index(ascending = True)
+
+#     #Plot AREA curve
+#     surv_rate_name[['Chances of Survival']].plot.area()
+#     plt.show()
+
+#     surv_rate_name.sort_index(ascending = True)
+    return df['First_Letter'].tolist()
+survival_name(load_data())
+
+def survival_title(dataframe):
+    
+    
+    def title_sort(row):
+        if row['Title'] == title_list[0]:
+            return -3
+        elif row['Title'] == title_list[1]:
+            return -1
+        elif row['Title'] == title_list[2]:
+            return 1
+        elif row['Title'] == title_list[3]:
+            return 3
+        else:
+            return 100
+
+    df = dataframe.copy()
+    
+    df['Title'] = df.apply(lambda x: x['Name'].split(' ')[1], axis = 1)
+    title_list = df.Title.unique().tolist()[:4]
+    
+    df['Title'] = df.apply(lambda x: title_sort(x), axis = 1)
+    
+#     groups = df.groupby(['Survived', 'Title'])
+#     surv_rate_emb = groups.size().unstack()
+
+#     #Plot bar chart indicating dead and survivors for people from each port of embarkment
+#     surv_rate_emb.plot.bar(stacked = False)
+#     plt.show()
+    
+#     surv_rate_emb = surv_rate_emb.T
+#     surv_rate_emb['Chances of Survival'] = surv_rate_emb.apply(lambda x: (float(x[1])/(x[1]+x[0]))*100, axis = 1) 
+    
+#     surv_rate_emb.sort_values(0, ascending = False, inplace = True)
+    
+    return df['Title'].tolist()
+
+survival_title(load_data())
+
+def clean_data(dataframe):
+    df = dataframe.copy()
+    
+    #Replace embarkment port initials to workable numbers
+    df.Embarked.replace({"S":-1,
+                    "C" : 0,
+                    "Q" : 1}, inplace = True)
+
+    #Generating columns with proper scaled data
+    df['Fare'] = survival_fare(df)
+    df['Sex'] = survival_gender(df)
+    df['Family_Size'] = survival_family(df)*10
+    df['Age'] = survival_age(df)
+    df['First_Letter'] = survival_name(df)
+    df['Title'] = survival_title(df)
+    df['Pclass'] = df['Pclass'].apply(lambda x: 1 if x==1 else 0)
+    
+    #Drop NaN values for classifier raises Error
+    df.fillna(0, inplace = True)
+    
+    # Output values for survived or not, for ML input
+    #If Survived in columns, it is training set
+    if 'Survived' in df.columns.tolist():
+        y = df['Survived']
+        #Drop extraneous columns not capable of features to from traning set input
+        df.drop(['Cabin', 'Ticket', 'SibSp','Parch', 'Survived', 'Name'], axis = 1, inplace = True)
+    else:
+        y = None
+        #Drop extraneous columns not capable of features to testing set input
+        df.drop(['Cabin', 'Ticket', 'SibSp','Parch', 'Name'], axis = 1, inplace = True)
+    x = df
+    
+    return x,y
+clean_data(load_data())
+
+# Training the model
+x, y = clean_data(load_data())
+
+x = x.as_matrix()
+y = y.as_matrix()
+x_train, x_cv, y_train, y_cv = sk.model_selection.train_test_split(x, y, test_size = 0.4, random_state = 0)
+
+
+# Parameters = {'C':[0.001, 0.03,0.01,.03,0.1,0.3,1,3,10], 'kernel':['rbf'], 'shrinking':[True, False], 'tol':[0.0001],
+#               'class_weight':[None,'balanced'], 'max_iter':[10000000]
+#               }
+    
+clf = sk.svm.SVC(kernel = 'rbf', tol = 0.000001, C=10, max_iter=10000000)    
+# estimator = sk.svm.SVC()
+# grid = sk.model_selection.GridSearchCV(estimator, param_grid = Parameters, cv=3)
+# # # # sk.svm.SVC(kernel = 'rbf', tol = 0.000001, C=10, max_iter=10000000)
+
+clf.fit(x_train, y_train)
+print("training score : ")
+print(clf.score(x_train, y_train))
+print("CV Score : ")
+print(clf.score(x_cv, y_cv))
+
+# clf = grid.best_estimator_
+
+test_data = pd.read_csv('Titanic_test.csv')
+test_df = pd.DataFrame(test_data)
+test_df.set_index('PassengerId', inplace = True)
+x_test = clean_data(test_df)[0]
+y_test = clf.predict(x_test)
+y_test
+sub = pd.read_csv('Titanic_gender_submission.csv')
+x_test['Survived'] = y_test
+# x_test.reset_index(inplace = True)
+# x_test[['PassengerId', 'Survived']].set_index('PassengerId')
+result = x_test['Survived']
+result.to_csv('Titanic_Predictions.csv', header='Survived')
+pd.read_csv('Titanic_Predictions.csv')
