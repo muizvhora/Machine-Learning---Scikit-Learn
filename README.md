@@ -1,7 +1,7 @@
 # Machine-Learning---Scikit-Learn
 
 
-!) Recursive feature elimination with cross-validation:
+1) Recursive feature elimination with cross-validation:
 
 A recursive feature elimination example with automatic tuning of the
 number of features selected with cross-validation.
