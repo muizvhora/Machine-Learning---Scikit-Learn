@@ -1,0 +1,60 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import tensorflow as tf
+import sklearn as sk
+from datetime import datetime
+import matplotlib.pyplot as plt
+from sklearn.neural_network import MLPRegressor
+
+# Import Training dataset from local file 
+data = pd.read_csv('training_dataset.csv')
+data.head()
+
+Y = data['Load']
+
+X = data[['T','T2' ,'T3', 'min_temp','max_temp', 'saturday', 'sunday', 'monday', 'weekday', 'month1', 'month2', 'month3',
+          'month4', 'month5','month6', 'month7', 'month8', 'month9', 'month10', 'month11', 'month12', 'hour1',  'hour2',  'hour3',  
+          'hour4' , 'hour5' , 'hour6', 'hour7' , 'hour8' , 'hour9' , 'hour10' ,'hour11', 'hour12', 'hour13', 'hour14', 'hour15',
+          'hour16', 'hour17', 'hour18', 'hour19' ,'hour20', 'hour21', 'hour22' ,'hour23',
+          ]]
+
+X_norm = sk.preprocessing.normalize(X, norm = 'l2', axis = 0)
+
+X_train = X_norm 
+Y_train = Y
+
+mlp = MLPRegressor(hidden_layer_sizes=(20,10,5), max_iter = 1000, validation_fraction = 0.2)            
+mlp.fit(X_norm, Y_norm)
+print("Train set score: %f" % mlp.score(X_train, Y_train))
+
+# Import Testing dataset from local file
+data1 = pd.read_csv('test_dataset.csv')
+data1.head()
+
+X1 = data1[['T','T2' ,'T3', 'min_temp','max_temp', 'saturday', 'sunday', 'monday', 'weekday', 'month1', 'month2', 'month3',
+          'month4', 'month5','month6', 'month7', 'month8', 'month9', 'month10', 'month11', 'month12', 'hour1',  'hour2',  'hour3',  
+          'hour4' , 'hour5' , 'hour6', 'hour7' , 'hour8' , 'hour9' , 'hour10' ,'hour11', 'hour12', 'hour13', 'hour14', 'hour15',
+          'hour16', 'hour17', 'hour18', 'hour19' ,'hour20', 'hour21', 'hour22' ,'hour23',
+          ]]
+Y1 = data1['Load']
+
+X_norm1 = sk.preprocessing.normalize(X1, norm = 'l2', axis = 0)
+
+X_test = X_norm1
+Y_test = Y1
+
+for i in range(99,100):
+    itera = 100*i
+    mlp = MLPRegressor(hidden_layer_sizes=(i,10,5), max_iter = itera, validation_fraction = 0)            
+    mlp.fit(X_train, Y_train)
+    plt.scatter(mlp.score(X_test, Y_test), i)
+plt.show()
+
+print("Test set score: %f" % mlp.score(X_test, Y_test))
+Y_pred = mlp.predict(X_test)
+Results = pd.DataFrame(Y_pred, Y_test)
+
+filepath = 'Output.csv'    
+results = pd.DataFrame(Results)
+results.to_csv(filepath)
